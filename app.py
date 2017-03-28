@@ -1,18 +1,15 @@
 # This sample uses code from https://pythonhosted.org/Flask-OAuth/ for OAuth1 login with Twitter
-from flask import Flask, request, redirect, url_for, session, g, flash, \
-     render_template
+from flask import Flask, request, redirect, url_for, session, g, flash, render_template
 from flask_oauth import OAuth
 from qb import create_customer, add_customer
-import json
-from utils import excel 
-from utils import configRead
+from utils import excel, configRead 
 
 # configuration
 SECRET_KEY = 'dev key'
 DEBUG = True
 font_color = 'black'
-consumer_tokens = configRead.get_consumer_tokens()
-oauth_url = configRead.get_oauth_urls()
+consumerTokens = configRead.consumerTokens()
+oauth_url = configRead.oauthUrl()
 
 # setup flask
 app = Flask(__name__)
@@ -21,12 +18,12 @@ app.secret_key = SECRET_KEY
 oauth = OAuth()
 
 qbo = oauth.remote_app('qbo',
-    base_url=oauth_url['base_url'],
-    request_token_url=oauth_url['request_token_url'],
-    access_token_url=oauth_url['access_token_url'],
-    authorize_url=oauth_url['authorize_url'],
-    consumer_key=consumer_tokens['consumer_key'],
-    consumer_secret=consumer_tokens['consumer_sec']
+    base_url=oauth_url.base_url,
+    request_token_url=oauth_url.request_token_url,
+    access_token_url=oauth_url.access_token_url,
+    authorize_url=oauth_url.authorize_url,
+    consumer_key=consumerTokens.consumer_key,
+    consumer_secret=consumerTokens.consumer_sec
 )
  
 @qbo.tokengetter
@@ -44,12 +41,12 @@ def index():
     access_token = access_token[0]
     global customer_list
     customer_list = excel.load_excel()
- 
     return render_template('index.html', 
         customer_dict=customer_list,
         title="QB Customer Leads",
         text_color=font_color)
 
+# Update leads in html after adding a customer to QBO handled here for simplicity
 @app.route('/', methods=['GET','POST'])
 def update_table():
     customer_id = request.form['id']
@@ -57,32 +54,19 @@ def update_table():
         if customer['Id'] == customer_id:
             # Create customer object, add customer to qbo and get response
             customer_obj = create_customer(customer)
-            req_status_content = add_customer(customer_obj)
-            status_code = req_status_content['status_code']
-            content = json.loads(req_status_content['content'])
-
-            global message
+            response_data = add_customer(customer_obj)
+            status_code = response_data['status_code']
+            message =  response_data['message']
             global font_color
+            font_color = response_data['font_color']
             # If customer added successfully, remove them from html and excel file
             if (status_code == 200):
-                font_color = 'green'
                 new_customer_list = excel.remove_lead(customer_list, customer_id)
-                message = "Success! Customer added to QBO"
                 flash(message)
-
                 return render_template('index.html',
                                        customer_dict=new_customer_list,
                                        title="QB Customer Leads",
                                        text_color=font_color)
-            
-            #If customer not found, show error message
-            else:
-                font_color = 'red'
-                try:
-                    message = content['Fault']['Error'][0]['Message']
-                except:
-                        message = "Some error occurred. Error message not found."
-            
     flash(message)
     return redirect(url_for('index'))
  

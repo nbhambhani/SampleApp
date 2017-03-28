@@ -11,25 +11,22 @@ config_file = get_filepath('../config.ini')
 parser = SafeConfigParser()
 parser.read(config_file)
 
-def get_consumer_tokens():
-    consumer_token = {}
-    consumer_token['consumer_key'] = parser.get('Tokens', 'consumer_key')
-    consumer_token['consumer_sec'] = parser.get('Tokens', 'consumer_sec')
-    return consumer_token
+class consumerTokens:
+    def __init__(self):
+        self.consumer_key = parser.get('Tokens', 'consumer_key')
+        self.consumer_sec = parser.get('Tokens', 'consumer_sec')
 
-def get_oauth_urls():
-	oauth_url = {}
-	oauth_url['base_url'] = parser.get('OAuth URLs', 'base_url')
-	oauth_url['request_token_url'] = parser.get('OAuth URLs', 'request_token_url')
-	oauth_url['access_token_url'] = parser.get('OAuth URLs', 'access_token_url')
-	oauth_url['authorize_url'] = parser.get('OAuth URLs', 'authorize_url')
-	return oauth_url
+class oauthUrl:
+    def __init__(self):
+        self.base_url = parser.get('OAuth URLs', 'base_url')
+        self.request_token_url = parser.get('OAuth URLs', 'request_token_url')
+        self.access_token_url = parser.get('OAuth URLs', 'access_token_url')
+        self.authorize_url = parser.get('OAuth URLs', 'authorize_url')
 
 def get_api_url():
-	return parser.get('API URL', 'base_url')
+    return parser.get('API URL', 'base_url')
 
-def get_minorversion(minorversion):
-	return '?minorversion='+str(minorversion)
-	
+def get_minorversion(minor_version):
+    return '?minorversion='+str(minor_version)
 
 
