@@ -9,8 +9,8 @@ def do_post(url, headers, payload, auth):
     response_data['content'] = req.content
     return response_data
 
-def make_request(req_data, req_context, method):
-    headers = {'Accept': 'application/json', 'content-type': 'application/json; charset=utf-8'}
+def request(req_data, req_context, method):
+    headers = {'Accept': 'application/json', 'content-type': 'application/json; charset=utf-8', 'User-Agent': 'PythonSampleApp1'}
     payload = req_data['payload']
     url = req_data['url']
     auth = OAuth1(req_context.consumer_key, req_context.consumer_secret, req_context.access_key, req_context.access_secret)

@@ -1,6 +1,5 @@
 import Customer
 from utils import configRead, requestMethods 
-#from utils import requestMethods
 from flask import session
 from utils import context
 import json
@@ -19,13 +18,12 @@ def create_customer(my_customer):
     return customer
 
 # Add selected lead as a customer to QBO
-def add_customer(customer):
+def add_customer(customer, req_context):
     req_body = json_body(customer)
-    reqContext = req_context()
-    base_url = configRead.get_api_url() + reqContext.realm_id 
+    base_url = configRead.get_api_url() + req_context.realm_id 
     url = base_url + '/customer' + configRead.get_minorversion(4)
     request_data = {'payload': req_body, 'url': url}
-    response_data = requestMethods.make_request(request_data, reqContext, method='POST')
+    response_data = requestMethods.request(request_data, req_context, method='POST')
     handled_response =  handle_response(response_data)
     return handled_response
 
@@ -44,6 +42,23 @@ def json_body(customer):
         print 'Customer object has no attributes'
     return req_body
 
+# Get error/success message after response
+def handle_response(response_data):
+    new_reponse = {}
+    new_reponse['status_code'] = response_data['status_code']
+    content = json.loads(response_data['content'])
+    if response_data['status_code'] != 200:
+        new_reponse['font_color'] = 'red'
+        try:
+            new_reponse['message'] = content['Fault']['Error'][0]['Message']
+        except:
+            new_reponse['message'] = "Some error occurred. Error message not found."
+    else:
+        new_reponse['font_color'] = 'green'
+        new_reponse['message'] = "Success! Customer added to QBO"
+        # More data from successful response can be retrieved like customer id
+    return new_reponse
+
 # Set and get context of the request
 def req_context():
     try:
@@ -59,20 +74,3 @@ def req_context():
 
     req_context = context.RequestContext(realm_id, access_key, access_sec)
     return req_context
-
-# Get error/success message after response
-def handle_response(response_data):
-    new_reponse = {}
-    new_reponse['status_code'] = response_data['status_code']
-    content = json.loads(response_data['content'])
-    if response_data['status_code'] != 200:
-        new_reponse['font_color'] = 'red'
-        try:
-            new_reponse['message'] = content['Fault']['Error'][0]['Message']
-        except:
-            new_reponse['message'] = "Some error occurred. Error message not found."
-    else:
-        new_reponse['font_color'] = 'green'
-        new_reponse['message'] = "Success! Customer added to QBO"
-        # More data from 200 response can be retrieved like customer id
-    return new_reponse

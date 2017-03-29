@@ -1,7 +1,7 @@
 # This sample uses code from https://pythonhosted.org/Flask-OAuth/ for OAuth1 login with Twitter
 from flask import Flask, request, redirect, url_for, session, g, flash, render_template
 from flask_oauth import OAuth
-from qb import create_customer, add_customer
+from qb import create_customer, add_customer, req_context
 from utils import excel, configRead 
 
 # configuration
@@ -54,7 +54,7 @@ def update_table():
         if customer['Id'] == customer_id:
             # Create customer object, add customer to qbo and get response
             customer_obj = create_customer(customer)
-            response_data = add_customer(customer_obj)
+            response_data = add_customer(customer_obj, req_context)
             status_code = response_data['status_code']
             message =  response_data['message']
             global font_color
@@ -96,6 +96,8 @@ def oauth_authorized(resp):
         resp['oauth_token'],
         resp['oauth_token_secret']
     )
+    global req_context
+    req_context = req_context()
     return redirect(url_for('index'))
  
 if __name__ == '__main__':
